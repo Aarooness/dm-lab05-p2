@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Marketing Fácil</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<main class="container">
+    <header class="topbar">
+        <a class="brand" href="/">Marketing Fácil</a>
+        <span class="badge">Generación local mediante plantillas y diseños</span>
+    </header>
+    <section class="intro">
+        <p class="eyebrow">Laboratorio · Pregunta 2</p>
+        <h1>Prepara una campaña para tu producto</h1>
+        <p>Sube una fotografía, elige un guion y crea piezas para redes sociales. Todo se procesa localmente.</p>
+    </section>
+
+    <div class="notice" th:if="${notice}" th:text="${notice}"></div>
+    <div class="error" th:if="${error}" th:text="${error}"></div>
+
+    <section class="card">
+        <h2><span class="step">1</span> Cuéntanos sobre el producto</h2>
+        <form action="/campaigns" method="post" enctype="multipart/form-data">
+            <label>Nombre de la empresa
+                <input name="companyName" maxlength="120" required th:value="${companyName}">
+            </label>
+            <label>Nombre del producto
+                <input name="productName" maxlength="120" required th:value="${productName}">
+            </label>
+            <label>Descripción breve
+                <textarea name="description" rows="3" maxlength="500" required th:text="${description}"></textarea>
+            </label>
+            <label>Fotografía del producto (JPG o PNG, máximo 10 MB)
+                <input name="photo" type="file" accept="image/jpeg,image/png" required>
+            </label>
+            <button type="submit">Crear campaña y proponer guiones</button>
+        </form>
+    </section>
+
+    <section class="previous" th:if="${!campaigns.isEmpty()}">
+        <h2>Campañas anteriores</h2>
+        <div class="campaign-list">
+            <a class="campaign-row" th:each="campaign : ${campaigns}"
+               th:href="@{/campaigns/{id}(id=${campaign.id})}">
+                <span><strong th:text="${campaign.productName}">Producto</strong><small th:text="${campaign.companyName}">Empresa</small></span>
+                <span class="status"
+                      th:text="${campaign.generationStatus == 'PENDING' ? 'Pendiente' : campaign.generationStatus == 'GENERATING' ? 'Generando' : campaign.generationStatus == 'READY' ? 'Listo' : 'Error'}">Estado</span>
+            </a>
+        </div>
+    </section>
+    <footer>La generación local utiliza plantillas y diseños, no IA generativa. No se publicará nada en redes.</footer>
+</main>
+</body>
+</html>

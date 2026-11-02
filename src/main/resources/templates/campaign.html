@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${campaign.productName + ' · Marketing Fácil'}">Campaña · Marketing Fácil</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body th:attr="data-campaign-id=${campaign.id},data-generation-status=${campaign.generationStatus}">
+<main class="container">
+    <header class="topbar">
+        <a class="brand" href="/">Marketing Fácil</a>
+        <span class="badge">Generación local mediante plantillas y diseños</span>
+    </header>
+    <div class="notice" th:if="${notice}" th:text="${notice}"></div>
+    <div class="error" th:if="${error}" th:text="${error}"></div>
+
+    <section class="intro compact">
+        <a href="/">← Todas las campañas</a>
+        <p class="eyebrow">Campaña #<span th:text="${campaign.id}"></span></p>
+        <h1 th:text="${campaign.productName}">Producto</h1>
+        <p><span th:text="${campaign.companyName}"></span> · <span th:text="${campaign.description}"></span></p>
+    </section>
+
+    <section class="card product-card">
+        <h2><span class="step">1</span> Fotografía del producto</h2>
+        <img class="original-preview" th:src="@{/campaigns/{id}/files/original(id=${campaign.id})}" alt="Fotografía original del producto">
+    </section>
+
+    <section class="card">
+        <h2><span class="step">2</span> Tres propuestas de guion</h2>
+        <div class="script-grid">
+            <article class="script-card" th:each="script : ${campaign.scripts}"
+                     th:classappend="${campaign.selectedScriptId == script.id} ? ' chosen' : ''">
+                <span class="eyebrow" th:text="${script.style}">Estilo</span>
+                <h3 th:text="${script.title}">Título</h3>
+                <p th:text="${script.body}">Texto</p>
+                <p class="cta" th:text="${script.callToAction}">Llamada a la acción</p>
+                <form th:action="@{/campaigns/{id}/select(id=${campaign.id})}" method="post">
+                    <input type="hidden" name="scriptId" th:value="${script.id}">
+                    <button type="submit" th:disabled="${campaign.generationStatus == 'GENERATING'}"
+                            th:text="${campaign.selectedScriptId == script.id} ? 'Guion elegido' : 'Elegir este guion'">
+                        Elegir este guion
+                    </button>
+                </form>
+            </article>
+        </div>
+        <p class="muted">Los textos se construyen únicamente con los datos que proporcionaste; no se añaden precios, descuentos ni propiedades.</p>
+    </section>
+
+    <section class="card">
+        <h2><span class="step">3</span> Confirma el guion elegido</h2>
+        <div th:if="${selectedScript}">
+            <p><strong th:text="${selectedScript.title}">Título</strong></p>
+            <p th:text="${selectedScript.body}">Texto</p>
+            <p class="cta" th:text="${selectedScript.callToAction}">Llamada a la acción</p>
+            <form th:if="${campaign.generationStatus != 'GENERATING'}"
+                  th:action="@{/campaigns/{id}/generate(id=${campaign.id})}" method="post">
+                <button type="submit">Confirmar guion y generar materiales</button>
+            </form>
+        </div>
+        <p class="muted" th:if="${selectedScript == null}">Elige una propuesta en el paso 2 para continuar.</p>
+        <p class="muted" th:if="${campaign.generationStatus == 'GENERATING'}">El guion está confirmado y la generación está en curso.</p>
+    </section>
+
+    <section class="card" id="generation">
+        <h2><span class="step">4</span> Generar tres imágenes y un video</h2>
+        <p>Estado de generación:
+            <strong id="generation-status"
+                    th:text="${campaign.generationStatus == 'PENDING' ? 'Pendiente' : campaign.generationStatus == 'GENERATING' ? 'Generando' : campaign.generationStatus == 'READY' ? 'Listo' : 'Error'}">Pendiente</strong>
+        </p>
+        <p class="error" id="generation-error" th:if="${campaign.generationError}" th:text="${campaign.generationError}"></p>
+        <p class="muted" th:if="${campaign.generationStatus == 'PENDING'}">Confirma el guion del paso 3 para comenzar.</p>
+        <p class="muted" th:if="${campaign.generationStatus == 'GENERATING'}">La tarea se ejecuta en segundo plano. Esta página consulta el estado automáticamente.</p>
+    </section>
+
+    <section class="card results" id="results">
+        <h2><span class="step">5</span> Resultados y publicación</h2>
+        <p class="muted" th:if="${campaign.generationStatus != 'READY'}">Los archivos estarán disponibles aquí cuando la generación termine.</p>
+        <div class="result-grid" th:if="${campaign.generationStatus == 'READY'}">
+            <article class="result">
+                <img th:src="@{/campaigns/{id}/files/square(id=${campaign.id})}" alt="Diseño cuadrado">
+                <h3>Cuadrado</h3><a th:href="@{/campaigns/{id}/files/square(id=${campaign.id},download=true)}">Descargar PNG</a>
+            </article>
+            <article class="result">
+                <img th:src="@{/campaigns/{id}/files/vertical(id=${campaign.id})}" alt="Diseño vertical">
+                <h3>Vertical</h3><a th:href="@{/campaigns/{id}/files/vertical(id=${campaign.id},download=true)}">Descargar PNG</a>
+            </article>
+            <article class="result">
+                <img th:src="@{/campaigns/{id}/files/horizontal(id=${campaign.id})}" alt="Diseño horizontal">
+                <h3>Horizontal</h3><a th:href="@{/campaigns/{id}/files/horizontal(id=${campaign.id},download=true)}">Descargar PNG</a>
+            </article>
+        </div>
+        <div class="video-area" th:if="${campaign.generationStatus == 'READY'}">
+            <video controls preload="metadata" th:src="@{/campaigns/{id}/files/video(id=${campaign.id})}"></video>
+            <div class="download-row">
+                <a class="button secondary" th:href="@{/campaigns/{id}/files/video(id=${campaign.id},download=true)}">Descargar MP4</a>
+                <a class="button secondary" th:href="@{/campaigns/{id}/files/text(id=${campaign.id})}">Descargar texto para publicación</a>
+            </div>
+        </div>
+
+        <div class="publication">
+        <h3>Publicación en redes</h3>
+        <p><strong>Publicación real pendiente de configurar</strong></p>
+        <p>No hay credenciales ni integración oficial configuradas. La acción siguiente solo guarda una simulación local.</p>
+        <form th:if="${campaign.generationStatus == 'READY'}" th:action="@{/campaigns/{id}/simulate(id=${campaign.id})}" method="post">
+            <button class="secondary" type="submit">Simular publicación</button>
+        </form>
+        <p class="simulated" th:if="${campaign.publicationStatus == 'SIMULATED'}">
+            SIMULADA · No se publicó en Instagram, TikTok ni otra red.
+            <span th:if="${campaign.simulatedAt}" th:text="${campaign.simulatedAt}"></span>
+        </p>
+        <p class="muted" th:if="${campaign.publicationStatus != 'SIMULATED'}">Estado: Publicación real pendiente de configurar</p>
+        </div>
+    </section>
+    <footer>Descargar o simular no cumple por sí solo el requisito de publicación automática real. Para ello se necesita configurar una API oficial y sus credenciales autorizadas.</footer>
+</main>
+<script src="/campaign.js" defer></script>
+</body>
+</html>
